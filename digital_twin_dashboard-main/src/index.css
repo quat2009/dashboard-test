@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+.scrollbar-track-rounded::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scrollbar-track-rounded::-webkit-scrollbar-track {
+  background: oklch(92.2% 0 0);
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+.scrollbar-track-rounded::-webkit-scrollbar-thumb {
+  background: oklch(70.7% 0.022 261.325);
+  border-radius: 4px;
+}

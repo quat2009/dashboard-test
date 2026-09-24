@@ -1,0 +1,638 @@
+openapi: 3.0.3
+
+info:
+    title: Dashboard API
+    version: 1.1.0
+
+tags:
+    - name: User
+      description: User metadata endpoints
+
+    - name: Process
+      description: Process monitoring endpoints
+
+    - name: Orders
+      description: Order management
+
+    - name: Products
+      description: Product catalog
+
+paths:
+    /auth/login:
+        post:
+            tags:
+                - User
+            summary: User login
+            description: Authenticates a user with username and password
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginRequest'
+            responses:
+                '200':
+                    description: Login successful
+                    content:
+                        application/json:
+                            schema:
+                                type: boolean
+                '401':
+                    description: Wrong username or password
+                    content:
+                        application/json:
+                            schema:
+                                type: boolean
+                                example: false
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /user-types:
+        get:
+            tags:
+                - User
+            summary: Get user types
+            description: Returns available user roles
+            responses:
+                '200':
+                    description: List of user types
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/OptionItem'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /process/graph:
+        get:
+            tags:
+                - Process
+            summary: Get process graph
+            description: Returns nodes and edges representing the process flow
+            responses:
+                '200':
+                    description: Graph structure
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Graph'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /process/{processId}:
+        get:
+            tags:
+                - Process
+            summary: Get process details
+            description: Returns assets and sensors for a given process
+            parameters:
+                - name: processId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Process assets
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Asset'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /sensors/chart:
+        post:
+            tags:
+                - Process
+            summary: Get chart data
+            description: Returns chart data for one or more sensors
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - sensorIds
+                            properties:
+                                sensorIds:
+                                    type: array
+                                    items:
+                                        type: integer
+                                filter:
+                                    $ref: '#/components/schemas/ChartFilter'
+            responses:
+                '200':
+                    description: Chart data
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Chart'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /sensors:
+        get:
+            tags:
+                - Process
+            summary: Get sensor details
+            description: Returns metadata for multiple sensors
+            parameters:
+                - name: sensorIDs
+                  in: query
+                  required: true
+                  description: Comma-separated list of sensor IDs
+                  style: form
+                  explode: false
+                  schema:
+                      type: array
+                      items:
+                          type: integer
+            responses:
+                '200':
+                    description: Sensor details
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Sensor'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /products:
+        get:
+            tags:
+                - Products
+            summary: Get available products
+            description: Returns all available products
+            responses:
+                '200':
+                    description: Product list
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/Product'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /orders:
+        get:
+            tags:
+                - Orders
+            summary: Get current orders
+            description: Returns active orders
+            responses:
+                '200':
+                    description: Order list
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/OrderListItem'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /orders/add:
+        post:
+            tags:
+                - Orders
+            summary: Create order
+            description: Requests an order for products
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - products
+                            properties:
+                                products:
+                                    type: array
+                                    items:
+                                        $ref: '#/components/schemas/Product'
+                                details:
+                                    $ref: '#/components/schemas/OrderEnrichment'
+            responses:
+                '200':
+                    description: Order created
+                    content:
+                        application/json:
+                            schema:
+                                type: boolean
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /orders/completed:
+        get:
+            tags:
+                - Orders
+            summary: Get completed orders
+            description: Returns completed orders
+            responses:
+                '200':
+                    description: Completed order list
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/OrderListItem'
+
+    /orders/{orderId}:
+        get:
+            tags:
+                - Orders
+            summary: Get order details
+            description: Returns details of a specific order
+            parameters:
+                - name: orderId
+                  in: path
+                  required: false
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Order details
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Order'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /orders/{orderId}/delete:
+        delete:
+            tags:
+                - Orders
+            summary: Delete order
+            description: Deletes the specified order
+            parameters:
+                - name: orderId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Order deleted
+                    content:
+                        application/json:
+                            schema:
+                                type: boolean
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /orders/{orderId}/complete:
+        post:
+            tags:
+                - Orders
+            summary: Complete order
+            description: Marks an order as completed
+            parameters:
+                - name: orderId
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                '200':
+                    description: Order completed
+                    content:
+                        application/json:
+                            schema:
+                                type: boolean
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+
+    /kpis/{userId}:
+        get:
+            tags:
+                - User
+            summary: Get KPIs
+            description: Returns KPIs for the current user
+            parameters:
+                - name: userId
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                '200':
+                    description: KPI list
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/BaseMetric'
+                '400':
+                    description: Returns error message for frontend
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+components:
+    schemas:
+        LoginRequest:
+            type: object
+            required:
+                - username
+                - password
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+
+        OptionItem:
+            type: object
+            required:
+                - id
+                - name
+            properties:
+                id:
+                    type: integer
+                name:
+                    type: string
+
+        Graph:
+            type: object
+            required:
+                - nodes
+                - edges
+            properties:
+                nodes:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GraphNode'
+                edges:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GraphEdge'
+
+        GraphNode:
+            type: object
+            required:
+                - id
+                - name
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+
+        GraphEdge:
+            type: object
+            required:
+                - id
+                - source
+                - target
+            properties:
+                id:
+                    type: string
+                source:
+                    type: string
+                target:
+                    type: string
+
+        Asset:
+            type: object
+            required:
+                - assetID
+                - assetName
+                - sensors
+            properties:
+                assetID:
+                    type: integer
+                assetName:
+                    type: string
+                sensors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Sensor'
+
+        BaseMetric:
+            type: object
+            required:
+                - id
+                - name
+                - unit
+                - value
+                - type
+            properties:
+                id:
+                    type: integer
+                name:
+                    type: string
+                unit:
+                    type: string
+                value:
+                    type: number
+                type:
+                    type: string
+                    enum:
+                        - int
+                        - float
+                        - percent
+
+        Sensor:
+            type: object
+            required:
+                - id
+                - name
+                - unit
+                - type
+            properties:
+                id:
+                    type: integer
+                name:
+                    type: string
+                unit:
+                    type: string
+                type:
+                    type: string
+                    enum:
+                        - int
+                        - float
+                        - percent
+                value:
+                    type: number
+                    nullable: true
+                min:
+                    type: number
+                    nullable: true
+                disabled:
+                    type: boolean
+                    nullable: true
+
+        Chart:
+            type: object
+            description: Time series chart entry
+            required:
+                - xAxis
+            properties:
+                xAxis:
+                    type: string
+            additionalProperties:
+                oneOf:
+                    - type: number
+                    - type: string
+
+        ChartFilter:
+            type: object
+            description: Filter options for chart data
+            required:
+                - samplingFrequency
+                - fromDate
+                - toDate
+            properties:
+                samplingFrequency:
+                    type: number
+
+                fromDate:
+                    type: string
+                    format: date-time
+
+                toDate:
+                    type: string
+                    format: date-time
+
+        Product:
+            type: object
+            required:
+                - id
+            properties:
+                id:
+                    type: string
+
+                imageUrl:
+                    type: string
+                    nullable: true
+
+                quantity:
+                    type: integer
+                    nullable: true
+
+                maxQuantity:
+                    type: integer
+                    nullable: true
+
+        OrderEnrichment:
+            type: object
+            required:
+                - priority
+            properties:
+                customerName:
+                    type: string
+                    nullable: true
+
+                fulfillmentDate:
+                    type: string
+                    nullable: true
+
+                priority:
+                    type: boolean
+
+        OrderListItem:
+            type: object
+            required:
+                - orderID
+            properties:
+                orderID:
+                    type: string
+
+                customerName:
+                    type: string
+                    nullable: true
+
+                orderDate:
+                    type: string
+                    nullable: true
+
+                fulfillmentDate:
+                    type: string
+                    nullable: true
+
+                priority:
+                    type: boolean
+                    nullable: true
+
+        Order:
+            type: object
+            required:
+                - details
+                - products
+            properties:
+                details:
+                    $ref: '#/components/schemas/OrderListItem'
+
+                products:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Product'
+
+        Error:
+            type: object
+            properties:
+                msg:
+                    type: string
